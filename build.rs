@@ -68,9 +68,9 @@ fn search_include(include_prefix: &[String], header: &str) -> Result<String> {
 
 #[cfg(target_os = "windows")]
 fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
-    let prefix = join(out_dir, "ffmpeg-n6.1-latest-win64-gpl-shared-6.1").unwrap();
+    let prefix = join(out_dir, "ffmpeg-n7.1-latest-win64-gpl-shared-7.1").unwrap();
     if !is_exsit(&prefix) {
-        exec("Invoke-WebRequest -Uri https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n6.1-latest-win64-gpl-shared-6.1.zip -OutFile ffmpeg.zip", out_dir)?;
+        exec("Invoke-WebRequest -Uri https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-shared-7.1.zip -OutFile ffmpeg.zip", out_dir)?;
         exec(
             "Expand-Archive -Path ffmpeg.zip -DestinationPath ./",
             out_dir,
@@ -85,11 +85,11 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
 
 #[cfg(target_os = "linux")]
 fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
-    let prefix = join(out_dir, "ffmpeg-n6.1-latest-linux64-gpl-shared-6.1").unwrap();
+    let prefix = join(out_dir, "ffmpeg-n7.1-latest-linux64-gpl-shared-7.1").unwrap();
     if !is_exsit(&prefix) {
-        exec("wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n6.1-latest-linux64-gpl-shared-6.1.tar.xz", out_dir)?;
+        exec("wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-linux64-gpl-shared-7.1.tar.xz", out_dir)?;
         exec(
-            "tar -xf ffmpeg-n6.1-latest-linux64-gpl-shared-6.1.tar.xz",
+            "tar -xf ffmpeg-n7.1-latest-linux64-gpl-shared-7.1.tar.xz",
             out_dir,
         )?;
     }
@@ -170,25 +170,25 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=./build.rs");
 
     let out_dir = env::var("OUT_DIR")?;
-    let libs: &[(&str, &str)] = &[
+    let libs: &[&str] = &[
         #[cfg(feature = "avcodec")]
-        ("avcodec", "58"),
+        "avcodec",
         #[cfg(feature = "avdevice")]
-        ("avdevice", "58"),
+        "avdevice",
         #[cfg(feature = "avfilter")]
-        ("avfilter", "7"),
+        "avfilter",
         #[cfg(feature = "avformat")]
-        ("avformat", "58"),
+        "avformat",
         #[cfg(feature = "avutil")]
-        ("avutil", "56"),
+        "avutil",
         #[cfg(feature = "swresample")]
-        ("swresample", "3"),
+        "swresample",
         #[cfg(feature = "swscale")]
-        ("swscale", "5"),
+        "swscale",
     ];
 
     let (mut include_paths, link_paths) = find_ffmpeg_prefix(&out_dir)?;
-    for (lib, _) in libs {
+    for lib in libs {
         println!("cargo:rustc-link-lib={}", lib);
     }
 
