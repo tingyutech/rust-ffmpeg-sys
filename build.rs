@@ -77,12 +77,15 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
         )?;
     }
 
-    Ok((vec![join(&prefix, "include")?], vec![join(&prefix, "lib")?]))
+    Ok((
+        vec![join(&prefix, "./include")?],
+        vec![join(&prefix, "./lib")?],
+    ))
 }
 
 #[cfg(target_os = "linux")]
 fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
-    let prefix = join(out_dir, "ffmpeg-n6.1-latest-win64-gpl-shared-6.1").unwrap();
+    let prefix = join(out_dir, "ffmpeg-n6.1-latest-linux64-gpl-shared-6.1").unwrap();
     if !is_exsit(&prefix) {
         exec("wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n6.1-latest-linux64-gpl-shared-6.1.tar.xz", out_dir)?;
         exec(
@@ -91,13 +94,19 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
         )?;
     }
 
-    Ok((vec![join(&prefix, "include")?], vec![join(&prefix, "lib")?]))
+    Ok((
+        vec![join(&prefix, "./include")?],
+        vec![join(&prefix, "./lib")?],
+    ))
 }
 
 #[cfg(target_os = "macos")]
 fn find_ffmpeg_prefix() -> Result<(Vec<String>, Vec<String>)> {
     let prefix = exec("brew --prefix ffmpeg@7", "./")?.replace('\n', "");
-    Ok((vec![join(&prefix, "include")?], vec![join(&prefix, "lib")?]))
+    Ok((
+        vec![join(&prefix, "./include")?],
+        vec![join(&prefix, "./lib")?],
+    ))
 }
 
 #[derive(Debug)]
