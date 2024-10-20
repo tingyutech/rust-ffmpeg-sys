@@ -321,7 +321,8 @@ fn main() -> Result<()> {
         .blocklist_function("y0l")
         .blocklist_function("y1l")
         .blocklist_function("ynl")
-        .generate_comments(false);
+        .generate_comments(false)
+        .header("src/defines.h");
 
     let mut headers = Vec::with_capacity(255);
 
@@ -333,14 +334,35 @@ fn main() -> Result<()> {
         headers.append(&mut vec!["libavdevice/avdevice.h"]);
 
         #[cfg(target_os = "windows")]
-        headers.append(&mut vec![
-            "libavutil/hwcontext_d3d11va.h",
-            "libavutil/hwcontext_qsv.h",
-        ]);
+        {
+            // ignore d3d11
+            {
+                let header_path = join(&out_dir, "hwcontext_d3d11va.h")?;
+                fs::write(
+                    &header_path,
+                    fs::read_to_string(search_include(
+                        &include_paths,
+                        "libavutil/hwcontext_d3d11va.h",
+                    )?)?
+                    .replace("#include <d3d11.h>", "")
+                    .replace("ID3D11DeviceContext", "void")
+                    .replace("ID3D11Device", "void")
+                    .replace("ID3D11VideoDevice", "void")
+                    .replace("ID3D11VideoContext", "void")
+                    .replace("ID3D11Texture2D", "void")
+                    .replace("UINT", "uint32_t"),
+                )?;
+
+                builder = builder.header(header_path);
+            }
+
+            headers.append(&mut vec!["libavutil/hwcontext_qsv.h"]);
+        }
 
         #[cfg(target_os = "linux")]
         headers.append(&mut vec![
             "libavutil/hwcontext_drm.h",
+            "libavutil/hwcontext_vaapi.h",
             "libavutil/hwcontext_qsv.h",
         ]);
     }

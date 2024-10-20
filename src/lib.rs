@@ -20,6 +20,7 @@
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[inline(always)]
+#[cfg(feature = "avutil")]
 pub unsafe fn av_make_q(num: std::ffi::c_int, den: std::ffi::c_int) -> AVRational {
     AVRational { num, den }
 }
