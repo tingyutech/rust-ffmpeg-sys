@@ -101,8 +101,8 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
 }
 
 #[cfg(target_os = "macos")]
-fn find_ffmpeg_prefix() -> Result<(Vec<String>, Vec<String>)> {
-    let prefix = exec("brew --prefix ffmpeg@7", "./")?.replace('\n', "");
+fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
+    let prefix = exec("brew --prefix ffmpeg@7", out_dir)?.replace('\n', "");
     Ok((
         vec![join(&prefix, "./include")?],
         vec![join(&prefix, "./lib")?],
@@ -185,19 +185,9 @@ fn main() -> Result<()> {
         ("swresample", "3"),
         #[cfg(feature = "swscale")]
         ("swscale", "5"),
-        #[cfg(target_os = "linux")]
-        ("mfx", "1"),
     ];
 
-    #[cfg(target_os = "windows")]
     let (mut include_paths, link_paths) = find_ffmpeg_prefix(&out_dir)?;
-
-    #[cfg(target_os = "linux")]
-    let (mut include_paths, link_paths) = find_ffmpeg_prefix(&out_dir)?;
-
-    #[cfg(target_os = "macos")]
-    let (mut include_paths, link_paths) = find_ffmpeg_prefix()?;
-
     for (lib, _) in libs {
         println!("cargo:rustc-link-lib={}", lib);
     }
@@ -206,7 +196,7 @@ fn main() -> Result<()> {
         println!("cargo:rustc-link-search=all={}", path);
     }
 
-    #[cfg(all(target_os = "windows", feature = "avdevice"))]
+    #[cfg(all(any(target_os = "windows", target_os = "linux"), feature = "avdevice"))]
     {
         let media_sdk_prefix = join(&out_dir, "media-sdk").unwrap();
         if !is_exsit(&media_sdk_prefix) {

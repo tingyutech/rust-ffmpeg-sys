@@ -10,7 +10,7 @@ anyhow = "1.0.80"
 bindgen = { version = "0.70", default-features = false, features = ["runtime"] }
 
 [features]
-default = ["avcodec"]
+default = []
 avcodec = []
 avdevice = []
 avformat = []
