@@ -2,6 +2,8 @@
 name = "mirror-ffmpeg-sys"
 version = "0.1.0"
 edition = "2021"
+description = "mirror ffmpeg sys crate"
+license = "MIT"
 
 [build-dependencies]
 anyhow = "1.0.80"
