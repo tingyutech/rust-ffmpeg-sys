@@ -194,7 +194,7 @@ fn main() -> Result<()> {
         #[cfg(feature = "swscale")]
         ("swscale", "5"),
         #[cfg(target_os = "linux")]
-        ("mfx", ""),
+        ("mfx", "1"),
     ];
 
     #[cfg(target_os = "windows")]
