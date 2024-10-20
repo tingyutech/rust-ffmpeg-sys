@@ -81,28 +81,17 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
 }
 
 #[cfg(target_os = "linux")]
-fn find_ffmpeg_prefix(libs: &[(&str, &str)]) -> Result<(Vec<String>, Vec<String>)> {
-    let mut librarys = Vec::new();
-    let mut includes = Vec::new();
-
-    for (name, version) in libs {
-        let lib = pkg_config::Config::new()
-            .atleast_version(version)
-            .probe(&format!("lib{}", name))?;
-
-        for path in lib.link_paths {
-            librarys.push(path.to_str().unwrap().to_string());
-        }
-
-        for path in lib.include_paths {
-            includes.push(path.to_str().unwrap().to_string());
-        }
+fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
+    let prefix = join(out_dir, "ffmpeg-n6.1-latest-win64-gpl-shared-6.1").unwrap();
+    if !is_exsit(&prefix) {
+        exec("wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n6.1-latest-linux64-gpl-shared-6.1.tar.xz", out_dir)?;
+        exec(
+            "tar -xf ffmpeg-n6.1-latest-linux64-gpl-shared-6.1.tar.xz",
+            out_dir,
+        )?;
     }
 
-    Ok((
-        de_duplicate(includes.into_iter()),
-        de_duplicate(librarys.into_iter()),
-    ))
+    Ok((vec![join(&prefix, "include")?], vec![join(&prefix, "lib")?]))
 }
 
 #[cfg(target_os = "macos")]
@@ -195,7 +184,7 @@ fn main() -> Result<()> {
     let (mut include_paths, link_paths) = find_ffmpeg_prefix(&out_dir)?;
 
     #[cfg(target_os = "linux")]
-    let (mut include_paths, link_paths) = find_ffmpeg_prefix(libs)?;
+    let (mut include_paths, link_paths) = find_ffmpeg_prefix(&out_dir)?;
 
     #[cfg(target_os = "macos")]
     let (mut include_paths, link_paths) = find_ffmpeg_prefix()?;

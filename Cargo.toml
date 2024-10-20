@@ -1,6 +1,6 @@
 [package]
 name = "mirror-ffmpeg-sys"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "mirror ffmpeg sys crate"
 license = "MIT"
@@ -8,9 +8,6 @@ license = "MIT"
 [build-dependencies]
 anyhow = "1.0.80"
 bindgen = { version = "0.70", default-features = false, features = ["runtime"] }
-
-[target.'cfg(target_os = "linux")'.build-dependencies]
-pkg-config = "0.3.31"
 
 [features]
 default = []
