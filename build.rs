@@ -196,7 +196,7 @@ fn main() -> Result<()> {
         println!("cargo:rustc-link-search=all={}", path);
     }
 
-    #[cfg(all(any(target_os = "windows", target_os = "linux"), feature = "avdevice"))]
+    #[cfg(feature = "qsv")]
     {
         let media_sdk_prefix = join(&out_dir, "media-sdk").unwrap();
         if !is_exsit(&media_sdk_prefix) {
@@ -338,15 +338,20 @@ fn main() -> Result<()> {
                 builder = builder.header(header_path);
             }
 
+            #[cfg(feature = "qsv")]
             headers.append(&mut vec!["libavutil/hwcontext_qsv.h"]);
         }
 
         #[cfg(target_os = "linux")]
-        headers.append(&mut vec![
-            "libavutil/hwcontext_drm.h",
-            "libavutil/hwcontext_vaapi.h",
-            "libavutil/hwcontext_qsv.h",
-        ]);
+        {
+            headers.append(&mut vec!["libavutil/hwcontext_drm.h"]);
+
+            #[cfg(feature = "vaapi")]
+            headers.append(&mut vec!["libavutil/hwcontext_vaapi.h"]);
+
+            #[cfg(feature = "vaapi")]
+            headers.append(&mut vec!["libavutil/hwcontext_qsv.h"]);
+        }
     }
 
     #[cfg(feature = "avfilter")]

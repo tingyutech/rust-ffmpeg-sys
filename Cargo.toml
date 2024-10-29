@@ -1,6 +1,6 @@
 [package]
 name = "mirror-ffmpeg-sys"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 description = "mirror ffmpeg sys crate"
 license = "MIT"
@@ -18,3 +18,7 @@ avfilter = []
 avutil = []
 swresample = []
 swscale = []
+
+# hardware
+qsv = []
+vaapi = []
