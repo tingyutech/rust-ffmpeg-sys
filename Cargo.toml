@@ -18,6 +18,7 @@ avfilter = []
 avutil = []
 swresample = []
 swscale = []
+postproc = []
 
 # hardware
 qsv = []

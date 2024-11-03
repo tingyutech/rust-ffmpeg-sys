@@ -185,6 +185,8 @@ fn main() -> Result<()> {
         "swresample",
         #[cfg(feature = "swscale")]
         "swscale",
+        #[cfg(feature = "postproc")]
+        "postproc",
     ];
 
     let (mut include_paths, link_paths) = find_ffmpeg_prefix(&out_dir)?;
