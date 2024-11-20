@@ -67,7 +67,7 @@ fn search_include(include_prefix: &[String], header: &str) -> Result<String> {
 }
 
 #[cfg(target_os = "windows")]
-fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
+fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
     let prefix = join(out_dir, "ffmpeg-n7.1-latest-win64-gpl-shared-7.1").unwrap();
     if !is_exsit(&prefix) {
         exec("Invoke-WebRequest -Uri https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-shared-7.1.zip -OutFile ffmpeg.zip", out_dir)?;
@@ -77,14 +77,11 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
         )?;
     }
 
-    Ok((
-        vec![join(&prefix, "./include")?],
-        vec![join(&prefix, "./lib")?],
-    ))
+    Ok(join(&prefix, "./lib")?)
 }
 
 #[cfg(target_os = "linux")]
-fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
+fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
     let prefix = join(out_dir, "ffmpeg-n7.1-latest-linux64-gpl-shared-7.1").unwrap();
     if !is_exsit(&prefix) {
         exec("wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-linux64-gpl-shared-7.1.tar.xz", out_dir)?;
@@ -94,19 +91,13 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
         )?;
     }
 
-    Ok((
-        vec![join(&prefix, "./include")?],
-        vec![join(&prefix, "./lib")?],
-    ))
+    Ok(join(&prefix, "./lib")?)
 }
 
 #[cfg(target_os = "macos")]
-fn find_ffmpeg_prefix(out_dir: &str) -> Result<(Vec<String>, Vec<String>)> {
+fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
     let prefix = exec("brew --prefix ffmpeg@7", out_dir)?.replace('\n', "");
-    Ok((
-        vec![join(&prefix, "./include")?],
-        vec![join(&prefix, "./lib")?],
-    ))
+    Ok(join(&prefix, "./lib")?)
 }
 
 #[derive(Debug)]
@@ -169,51 +160,38 @@ impl ParseCallbacks for Callbacks {
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=./build.rs");
 
+    let is_docs = std::env::var("DOCS_RS").is_ok();
     let out_dir = env::var("OUT_DIR")?;
-    let libs: &[&str] = &[
-        #[cfg(feature = "avcodec")]
-        "avcodec",
-        #[cfg(feature = "avdevice")]
-        "avdevice",
-        #[cfg(feature = "avfilter")]
-        "avfilter",
-        #[cfg(feature = "avformat")]
-        "avformat",
-        #[cfg(feature = "avutil")]
-        "avutil",
-        #[cfg(feature = "swresample")]
-        "swresample",
-        #[cfg(feature = "swscale")]
-        "swscale",
-        #[cfg(feature = "postproc")]
-        "postproc",
-    ];
 
-    let (mut include_paths, link_paths) = find_ffmpeg_prefix(&out_dir)?;
-    for lib in libs {
-        println!("cargo:rustc-link-lib={}", lib);
-    }
+    if is_docs {
+        println!("cargo:rustc-link-search=all={}", find_ffmpeg_prefix(&out_dir)?);
 
-    for path in link_paths {
-        println!("cargo:rustc-link-search=all={}", path);
-    }
+        let libs: &[&str] = &[
+            #[cfg(feature = "avcodec")]
+            "avcodec",
+            #[cfg(feature = "avdevice")]
+            "avdevice",
+            #[cfg(feature = "avfilter")]
+            "avfilter",
+            #[cfg(feature = "avformat")]
+            "avformat",
+            #[cfg(feature = "avutil")]
+            "avutil",
+            #[cfg(feature = "swresample")]
+            "swresample",
+            #[cfg(feature = "swscale")]
+            "swscale",
+            #[cfg(feature = "postproc")]
+            "postproc",
+        ];
 
-    #[cfg(feature = "qsv")]
-    {
-        let media_sdk_prefix = join(&out_dir, "media-sdk").unwrap();
-        if !is_exsit(&media_sdk_prefix) {
-            exec(
-                "git clone https://github.com/Intel-Media-SDK/MediaSDK media-sdk",
-                &out_dir,
-            )?;
+        for lib in libs {
+            println!("cargo:rustc-link-lib={}", lib);
         }
-
-        let media_sdk_include_prefix = join(&media_sdk_prefix, "./api/include")?;
-        include_paths.append(&mut vec![media_sdk_include_prefix.clone()]);
     }
 
     let mut builder = bindgen::Builder::default()
-        .clang_args(include_paths.iter().map(|include| format!("-I{}", include)))
+        .clang_args([format!("-I{}", "./include")])
         .blocklist_type("max_align_t")
         .opaque_type("__mingw_ldbl_type_t")
         .default_enum_style(bindgen::EnumVariation::Rust {
@@ -325,7 +303,7 @@ fn main() -> Result<()> {
                 fs::write(
                     &header_path,
                     fs::read_to_string(search_include(
-                        &include_paths,
+                        &["./include".to_string()],
                         "libavutil/hwcontext_d3d11va.h",
                     )?)?
                     .replace("#include <d3d11.h>", "")
@@ -377,7 +355,7 @@ fn main() -> Result<()> {
     headers.append(&mut vec!["libswscale/swscale.h"]);
 
     for it in headers {
-        builder = builder.header(search_include(&include_paths, it)?);
+        builder = builder.header(search_include(&["./include".to_string()], it)?);
     }
 
     #[cfg(any(
