@@ -163,7 +163,7 @@ fn main() -> Result<()> {
     let is_docs = std::env::var("DOCS_RS").is_ok();
     let out_dir = env::var("OUT_DIR")?;
 
-    if is_docs {
+    if !is_docs {
         println!("cargo:rustc-link-search=all={}", find_ffmpeg_prefix(&out_dir)?);
 
         let libs: &[&str] = &[
