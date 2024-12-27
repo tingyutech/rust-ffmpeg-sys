@@ -82,13 +82,23 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
 
 #[cfg(target_os = "linux")]
 fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
-    let prefix = join(out_dir, "ffmpeg-n7.1-latest-linux64-gpl-shared-7.1").unwrap();
+    #[cfg(target_arch = "x86_64")]
+    let name = "ffmpeg-n7.1-latest-linux64-gpl-shared-7.1";
+
+    #[cfg(target_arch = "aarch64")]
+    let name = "ffmpeg-n7.1-latest-linuxarm64-gpl-shared-7.1";
+
+    let prefix = join(out_dir, &name).unwrap();
     if !is_exsit(&prefix) {
-        exec("wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-linux64-gpl-shared-7.1.tar.xz", out_dir)?;
         exec(
-            "tar -xf ffmpeg-n7.1-latest-linux64-gpl-shared-7.1.tar.xz",
+            &format!(
+                "wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/{}.tar.xz",
+                name
+            ),
             out_dir,
         )?;
+        
+        exec(&format!("tar -xf {}.tar.xz", name), out_dir)?;
     }
 
     Ok(join(&prefix, "./lib")?)
@@ -164,9 +174,12 @@ fn main() -> Result<()> {
     let out_dir = env::var("OUT_DIR")?;
 
     if !is_docs {
-        println!("cargo:rustc-link-search=all={}", find_ffmpeg_prefix(&out_dir)?);
+        println!(
+            "cargo:rustc-link-search=all={}",
+            find_ffmpeg_prefix(&out_dir)?
+        );
 
-        let libs: &[&str] = &[
+        for lib in [
             #[cfg(feature = "avcodec")]
             "avcodec",
             #[cfg(feature = "avdevice")]
@@ -183,9 +196,7 @@ fn main() -> Result<()> {
             "swscale",
             #[cfg(feature = "postproc")]
             "postproc",
-        ];
-
-        for lib in libs {
+        ] {
             println!("cargo:rustc-link-lib={}", lib);
         }
     }
@@ -335,7 +346,11 @@ fn main() -> Result<()> {
     }
 
     #[cfg(feature = "avfilter")]
-    headers.append(&mut vec!["libavfilter/avfilter.h"]);
+    headers.append(&mut vec![
+        "libavfilter/avfilter.h",
+        "libavfilter/buffersrc.h",
+        "libavfilter/buffersink.h",
+    ]);
 
     #[cfg(feature = "avformat")]
     headers.append(&mut vec!["libavformat/avformat.h"]);
