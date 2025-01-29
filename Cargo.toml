@@ -1,5 +1,5 @@
 [package]
-name = "mirror-ffmpeg-sys"
+name = "hylarana-ffmpeg-sys"
 version = "0.1.10"
 edition = "2021"
 description = "mirror ffmpeg sys crate"
