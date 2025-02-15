@@ -37,6 +37,7 @@ fn exec(command: &str, work_dir: &str) -> Result<String> {
     })
     .current_dir(work_dir)
     .output()?;
+
     if !output.status.success() {
         Err(anyhow!("{}", unsafe {
             String::from_utf8_unchecked(output.stderr)
@@ -68,26 +69,20 @@ fn search_include(include_prefix: &[String], header: &str) -> Result<String> {
 
 #[cfg(target_os = "windows")]
 fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
-    let prefix = join(out_dir, "ffmpeg-n7.1-latest-win64-gpl-shared-7.1").unwrap();
+    let prefix = join(out_dir, "./ffmpeg")?;
     if !is_exsit(&prefix) {
-        exec("Invoke-WebRequest -Uri https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-shared-7.1.zip -OutFile ffmpeg.zip", out_dir)?;
+        exec(
+            "Invoke-WebRequest -Uri https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-shared-7.1.zip -OutFile ffmpeg.zip", 
+            out_dir
+        )?;
+        
         exec(
             "Expand-Archive -Path ffmpeg.zip -DestinationPath ./",
             out_dir,
         )?;
-        exec("Remove-Item ./ffmpeg.zip", out_dir)?;
-    }
 
-    {
-        if let Ok(out) = env::var("FFMPEG_DLL_COPY_DIR") {
-            exec(
-                &format!(
-                    "Copy-Item -Path \"{}/bin/*.dll\" -Destination \"{}\" -Force",
-                    prefix, out
-                ),
-                out_dir,
-            )?;
-        }
+        exec("Rename-Item -Path ./ffmpeg-n7.1-latest-win64-gpl-shared-7.1 -NewName ffmpeg", out_dir)?;
+        exec("Remove-Item ./ffmpeg.zip", out_dir)?;
     }
 
     Ok(join(&prefix, "./lib")?)
@@ -101,7 +96,7 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
     #[cfg(target_arch = "aarch64")]
     let name = "ffmpeg-n7.1-latest-linuxarm64-gpl-shared-7.1";
 
-    let prefix = join(out_dir, &name).unwrap();
+    let prefix = join(out_dir, "./ffmpeg")?;
     if !is_exsit(&prefix) {
         exec(
             &format!(
@@ -110,14 +105,10 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
             ),
             out_dir,
         )?;
+
+        exec(&format!("mv ./{} ./ffmpeg", name), out_dir)?;
         exec(&format!("tar -xf {}.tar.xz", name), out_dir)?;
         exec(&format!("rm -f {}.tar.xz", name), out_dir)?;
-    }
-
-    {
-        if let Ok(out) = env::var("FFMPEG_DLL_COPY_DIR") {
-            exec(&format!("cp {}/lib/* {}", prefix, out), out_dir)?;
-        }
     }
 
     Ok(join(&prefix, "./lib")?)
