@@ -76,17 +76,17 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
             out_dir,
         )?;
         exec("Remove-Item ./ffmpeg.zip", out_dir)?;
+    }
 
-        {
-            if let Ok(out) = env::var("FFMPEG_DLL_COPY_DIR") {
-                exec(
-                    &format!(
-                        "Copy-Item -Path \"{}/bin/*.dll\" -Destination \"{}\" -Force",
-                        prefix, out
-                    ),
-                    out_dir,
-                )?;
-            }
+    {
+        if let Ok(out) = env::var("FFMPEG_DLL_COPY_DIR") {
+            exec(
+                &format!(
+                    "Copy-Item -Path \"{}/bin/*.dll\" -Destination \"{}\" -Force",
+                    prefix, out
+                ),
+                out_dir,
+            )?;
         }
     }
 
@@ -112,11 +112,11 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
         )?;
         exec(&format!("tar -xf {}.tar.xz", name), out_dir)?;
         exec(&format!("rm -f {}.tar.xz", name), out_dir)?;
+    }
 
-        {
-            if let Ok(out) = env::var("FFMPEG_DLL_COPY_DIR") {
-                exec(&format!("cp {}/lib/* {}", prefix, out), out_dir)?;
-            }
+    {
+        if let Ok(out) = env::var("FFMPEG_DLL_COPY_DIR") {
+            exec(&format!("cp {}/lib/* {}", prefix, out), out_dir)?;
         }
     }
 
