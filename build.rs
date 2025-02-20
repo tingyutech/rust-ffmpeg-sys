@@ -106,8 +106,8 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
             out_dir,
         )?;
 
-        exec(&format!("mv ./{} ./ffmpeg", name), out_dir)?;
         exec(&format!("tar -xf {}.tar.xz", name), out_dir)?;
+        exec(&format!("mv ./{} ./ffmpeg", name), out_dir)?;
         exec(&format!("rm -f {}.tar.xz", name), out_dir)?;
     }
 
