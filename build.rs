@@ -72,16 +72,15 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
     let prefix = join(out_dir, "./ffmpeg")?;
     if !is_exsit(&prefix) {
         exec(
-            "Invoke-WebRequest -Uri https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-shared-7.1.zip -OutFile ffmpeg.zip", 
+            "Invoke-WebRequest -Uri https://github.com/mycrl/ffmpeg-rs/releases/download/ffmpeg-7.1/ffmpeg-windows-x64-7.1.zip -OutFile ffmpeg.zip", 
             out_dir
         )?;
-        
+
         exec(
             "Expand-Archive -Path ffmpeg.zip -DestinationPath ./",
             out_dir,
         )?;
 
-        exec("Rename-Item -Path ./ffmpeg-n7.1-latest-win64-gpl-shared-7.1 -NewName ffmpeg", out_dir)?;
         exec("Remove-Item ./ffmpeg.zip", out_dir)?;
     }
 
@@ -91,24 +90,23 @@ fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
 #[cfg(target_os = "linux")]
 fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
     #[cfg(target_arch = "x86_64")]
-    let name = "ffmpeg-n7.1-latest-linux64-gpl-shared-7.1";
+    let name = "ffmpeg-linux-x64-7.1";
 
     #[cfg(target_arch = "aarch64")]
-    let name = "ffmpeg-n7.1-latest-linuxarm64-gpl-shared-7.1";
+    let name = "ffmpeg-linux-aarch64-7.1";
 
     let prefix = join(out_dir, "./ffmpeg")?;
     if !is_exsit(&prefix) {
         exec(
             &format!(
-                "wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/{}.tar.xz",
+                "wget https://github.com/mycrl/ffmpeg-rs/releases/download/ffmpeg-7.1/{}.zip",
                 name
             ),
             out_dir,
         )?;
 
-        exec(&format!("tar -xf {}.tar.xz", name), out_dir)?;
-        exec(&format!("mv ./{} ./ffmpeg", name), out_dir)?;
-        exec(&format!("rm -f {}.tar.xz", name), out_dir)?;
+        exec(&format!("unzip {}.zip", name), out_dir)?;
+        exec(&format!("rm -f {}.zip", name), out_dir)?;
     }
 
     Ok(join(&prefix, "./lib")?)

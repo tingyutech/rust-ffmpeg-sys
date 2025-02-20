@@ -1,8 +1,8 @@
 [package]
-name = "hylarana-ffmpeg-sys"
-version = "0.1.14"
+name = "ffmpeg-dev-sys"
+version = "0.1.0"
 edition = "2021"
-description = "mirror ffmpeg sys crate"
+description = "ffmpeg sys crate"
 license = "MIT"
 
 [build-dependencies]
