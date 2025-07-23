@@ -182,28 +182,30 @@ fn main() -> Result<()> {
     let out_dir = env::var("OUT_DIR")?;
 
     if !is_docs {
-        println!(
-            "cargo:rustc-link-search=all={}",
-            find_ffmpeg_prefix(&out_dir)?
-        );
+        if std::env::var("USE_CUSTOM_FFMPEG_PREFIX").is_err() {
+            println!(
+                "cargo:rustc-link-search=all={}",
+                find_ffmpeg_prefix(&out_dir)?
+            );
+        }
 
         for lib in [
             #[cfg(feature = "avcodec")]
-            "avcodec",
+            std::env::var("LIBAVCODEC_PATH").unwrap_or_else(|_| "avcodec".to_string()),
             #[cfg(feature = "avdevice")]
-            "avdevice",
+            std::env::var("LIBAVDEVICE_PATH").unwrap_or_else(|_| "avdevice".to_string()),
             #[cfg(feature = "avfilter")]
-            "avfilter",
+            std::env::var("LIBAVFILTER_PATH").unwrap_or_else(|_| "avfilter".to_string()),
             #[cfg(feature = "avformat")]
-            "avformat",
+            std::env::var("LIBAVFORMAT_PATH").unwrap_or_else(|_| "avformat".to_string()),
             #[cfg(feature = "avutil")]
-            "avutil",
+            std::env::var("LIBAVUTIL_PATH").unwrap_or_else(|_| "avutil".to_string()),
             #[cfg(feature = "swresample")]
-            "swresample",
+            std::env::var("LIBSWRESAMPLE_PATH").unwrap_or_else(|_| "swresample".to_string()),
             #[cfg(feature = "swscale")]
-            "swscale",
+            std::env::var("LIBSWSCALE_PATH").unwrap_or_else(|_| "swscale".to_string()),
             #[cfg(feature = "postproc")]
-            "postproc",
+            std::env::var("LIBPOSTPROC_PATH").unwrap_or_else(|_| "postproc".to_string()),
         ] {
             println!("cargo:rustc-link-lib={}", lib);
         }
