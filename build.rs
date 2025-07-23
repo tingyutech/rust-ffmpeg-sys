@@ -189,25 +189,31 @@ fn main() -> Result<()> {
             );
         }
 
-        for lib in [
-            #[cfg(feature = "avcodec")]
-            std::env::var("LIBAVCODEC_PATH").unwrap_or_else(|_| "avcodec".to_string()),
-            #[cfg(feature = "avdevice")]
-            std::env::var("LIBAVDEVICE_PATH").unwrap_or_else(|_| "avdevice".to_string()),
-            #[cfg(feature = "avfilter")]
-            std::env::var("LIBAVFILTER_PATH").unwrap_or_else(|_| "avfilter".to_string()),
-            #[cfg(feature = "avformat")]
-            std::env::var("LIBAVFORMAT_PATH").unwrap_or_else(|_| "avformat".to_string()),
-            #[cfg(feature = "avutil")]
-            std::env::var("LIBAVUTIL_PATH").unwrap_or_else(|_| "avutil".to_string()),
-            #[cfg(feature = "swresample")]
-            std::env::var("LIBSWRESAMPLE_PATH").unwrap_or_else(|_| "swresample".to_string()),
-            #[cfg(feature = "swscale")]
-            std::env::var("LIBSWSCALE_PATH").unwrap_or_else(|_| "swscale".to_string()),
-            #[cfg(feature = "postproc")]
-            std::env::var("LIBPOSTPROC_PATH").unwrap_or_else(|_| "postproc".to_string()),
-        ] {
-            println!("cargo:rustc-link-lib={}", lib);
+        if let Ok(libs_str) = std::env::var("FFMPEG_LINK_LIBS") {
+            for lib in libs_str.split(",") {
+                println!("cargo:rustc-link-lib={}", lib);
+            }
+        } else {
+            for lib in [
+                #[cfg(feature = "avcodec")]
+                "avcodec",
+                #[cfg(feature = "avdevice")]
+                "avdevice",
+                #[cfg(feature = "avfilter")]
+                "avfilter",
+                #[cfg(feature = "avformat")]
+                "avformat",
+                #[cfg(feature = "avutil")]
+                "avutil",
+                #[cfg(feature = "swresample")]
+                "swresample",
+                #[cfg(feature = "swscale")]
+                "swscale",
+                #[cfg(feature = "postproc")]
+                "postproc",
+            ] {
+                println!("cargo:rustc-link-lib={}", lib);
+            }
         }
     }
 
