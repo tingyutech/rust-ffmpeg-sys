@@ -1,5 +1,7 @@
 thanks: https://github.com/zmwangx/rust-ffmpeg-sys
 
+# Please note! This library is locked to version 7.1 of FFMPEG!
+
 ### distributions
 
 windows: https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-shared-7.1.zip
