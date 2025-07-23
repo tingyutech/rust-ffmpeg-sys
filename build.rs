@@ -182,18 +182,16 @@ fn main() -> Result<()> {
     let out_dir = env::var("OUT_DIR")?;
 
     if !is_docs {
-        if std::env::var("USE_CUSTOM_FFMPEG_PREFIX").is_err() {
-            println!(
-                "cargo:rustc-link-search=all={}",
-                find_ffmpeg_prefix(&out_dir)?
-            );
-        }
-
         if let Ok(libs_str) = std::env::var("FFMPEG_LINK_LIBS") {
             for lib in libs_str.split(",") {
                 println!("cargo:rustc-link-lib={}", lib);
             }
         } else {
+            println!(
+                "cargo:rustc-link-search=all={}",
+                find_ffmpeg_prefix(&out_dir)?
+            );
+
             for lib in [
                 #[cfg(feature = "avcodec")]
                 "avcodec",
