@@ -7,44 +7,12 @@ use bindgen::callbacks::{
     EnumVariantCustomBehavior, EnumVariantValue, IntKind, MacroParsingBehavior, ParseCallbacks,
 };
 
-fn is_exsit(dir: &str) -> bool {
-    fs::metadata(dir).is_ok()
-}
-
 fn join(root: &str, next: &str) -> Result<String> {
     Ok(Path::new(root)
         .join(next)
         .to_str()
         .ok_or_else(|| anyhow!("Failed to path into string."))?
         .to_string())
-}
-
-fn exec(command: &str, work_dir: &str) -> Result<String> {
-    let output = Command::new(if cfg!(target_os = "windows") {
-        "powershell"
-    } else {
-        "bash"
-    })
-    .arg(if cfg!(target_os = "windows") {
-        "-command"
-    } else {
-        "-c"
-    })
-    .arg(if cfg!(target_os = "windows") {
-        format!("$ProgressPreference = 'SilentlyContinue';{}", command)
-    } else {
-        command.to_string()
-    })
-    .current_dir(work_dir)
-    .output()?;
-
-    if !output.status.success() {
-        Err(anyhow!("{}", unsafe {
-            String::from_utf8_unchecked(output.stderr)
-        }))
-    } else {
-        Ok(unsafe { String::from_utf8_unchecked(output.stdout) })
-    }
 }
 
 fn de_duplicate<T: Eq + Hash, I: Iterator<Item = T>>(input: I) -> Vec<T> {
@@ -65,57 +33,6 @@ fn search_include(include_prefix: &[String], header: &str) -> Result<String> {
     }
 
     Err(anyhow!("not found header = {:?}", header))
-}
-
-#[cfg(target_os = "windows")]
-fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
-    let prefix = join(out_dir, "./ffmpeg")?;
-    if !is_exsit(&prefix) {
-        exec(
-            "Invoke-WebRequest -Uri https://github.com/mycrl/ffmpeg-rs/releases/download/ffmpeg-7.1/ffmpeg-windows-x64-7.1.zip -OutFile ffmpeg.zip", 
-            out_dir
-        )?;
-
-        exec(
-            "Expand-Archive -Path ffmpeg.zip -DestinationPath ./",
-            out_dir,
-        )?;
-
-        exec("Remove-Item ./ffmpeg.zip", out_dir)?;
-    }
-
-    Ok(join(&prefix, "./lib")?)
-}
-
-#[cfg(target_os = "linux")]
-fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
-    #[cfg(target_arch = "x86_64")]
-    let name = "ffmpeg-linux-x64-7.1";
-
-    #[cfg(target_arch = "aarch64")]
-    let name = "ffmpeg-linux-aarch64-7.1";
-
-    let prefix = join(out_dir, "./ffmpeg")?;
-    if !is_exsit(&prefix) {
-        exec(
-            &format!(
-                "wget https://github.com/mycrl/ffmpeg-rs/releases/download/ffmpeg-7.1/{}.zip",
-                name
-            ),
-            out_dir,
-        )?;
-
-        exec(&format!("unzip {}.zip", name), out_dir)?;
-        exec(&format!("rm -f {}.zip", name), out_dir)?;
-    }
-
-    Ok(join(&prefix, "./lib")?)
-}
-
-#[cfg(target_os = "macos")]
-fn find_ffmpeg_prefix(out_dir: &str) -> Result<String> {
-    let prefix = exec("brew --prefix ffmpeg@7", out_dir)?.replace('\n', "");
-    Ok(join(&prefix, "./lib")?)
 }
 
 #[derive(Debug)]
@@ -184,14 +101,9 @@ fn main() -> Result<()> {
     if !is_docs {
         if let Ok(libs_str) = std::env::var("FFMPEG_LINK_LIBS") {
             for lib in libs_str.split(",") {
-                println!("cargo:rustc-link-lib={}", lib);
+                println!("cargo:rustc-link-lib={}", lib.trim());
             }
         } else {
-            println!(
-                "cargo:rustc-link-search=all={}",
-                find_ffmpeg_prefix(&out_dir)?
-            );
-
             for lib in [
                 #[cfg(feature = "avcodec")]
                 "avcodec",
@@ -212,6 +124,10 @@ fn main() -> Result<()> {
             ] {
                 println!("cargo:rustc-link-lib={}", lib);
             }
+        }
+
+        if let Ok(p) = std::env::var("FFMPEG_LIBS_PATH") {
+            println!("cargo:rustc-link-search=all={}", p.trim());
         }
     }
 
